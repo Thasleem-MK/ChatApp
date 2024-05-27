@@ -1,59 +1,58 @@
 "use client";
-import React, { useState } from "react";
-import { AudioRecorder, useAudioRecorder } from "react-audio-voice-recorder";
+import React, { useState, useEffect, useContext } from "react";
+import { useReactMediaRecorder } from "react-media-recorder-2";
 import attach from "../../../../public/attach.png";
 import mic from "../../../../public/microphone-filled_.png";
 import send from "../../../../public/send_.png";
 import Image from "next/image";
+import { StorageContext } from "./Storage";
 
-interface Blob {
-  size: number;
-  type: string;
-}
+const InputBar: React.FC = () => {
+  const storageContext = useContext(StorageContext);
 
-const InputBar = () => {
-  const recorderControls = useAudioRecorder();
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
+  if (!storageContext) {
+    throw new Error("StorageContext must be used within a StorageProvider");
+  }
 
-  const addAudioElement = (blob: Blob) => {
-    setAudioBlob(blob);
-  };
+  const { storage, setStorage } = storageContext;
 
-  const handleMouseDown = () => {
-    setIsRecording(true);
-    recorderControls.startRecording();
-  };
+  const { status, startRecording, stopRecording, mediaBlobUrl } =
+    useReactMediaRecorder({
+      video: false,
+      audio: {
+        echoCancellation: true,
+      },
+    });
 
-  const handleMouseUp = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      recorderControls.stopRecording();
+  const [message, setMessage] = useState<string>("");
+
+  useEffect(() => {
+    if (mediaBlobUrl) {
+      const Data = async () => {
+        const response = await fetch(mediaBlobUrl);
+        const blob = await response.blob();
+        const file = new File([blob], "audio-message.webm", {
+          type: "audio/webm",
+        });
+        setStorage((prev: File[]) => [...prev, file]);
+      };
+      Data();
     }
-  };
+  }, [mediaBlobUrl, setStorage]);
+
+  useEffect(() => {
+    return () => {
+      if (status === "recording") {
+        stopRecording();
+      }
+    };
+  }, [status, stopRecording]);
 
   const handleSend = async () => {
-    // Implement sending functionality here
-    if (audioBlob) {
-      // Send the audio blob to the backend or handle it accordingly
-      const formData = new FormData();
-      // formData.append("audio", audioBlob as Blob);
-
-      try {
-        const response = await fetch("YOUR_BACKEND_ENDPOINT", {
-          method: "POST",
-          body: formData,
-        });
-        if (response.ok) {
-          console.log("Audio sent successfully");
-          // Clear the audio blob after sending
-          setAudioBlob(null);
-        } else {
-          console.error("Failed to send audio");
-        }
-      } catch (error) {
-        console.error("Error sending audio:", error);
-      }
+    // send text message
+    if (message.trim()) {
+      console.log("Sending text message:", message);
+      setMessage(""); // Clear the input field after sending
     }
   };
 
@@ -61,42 +60,34 @@ const InputBar = () => {
     <div className="p-4 bg-slate-200 flex items-center space-x-2">
       <input
         type="text"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
         className="flex-grow p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
         placeholder="Type a message"
       />
       <input type="file" className="hidden" id="attachFile" />
       <label
         htmlFor="attachFile"
-        className="cursor-pointer rounded-full p-2  hover:bg-gray-300 transition-colors"
+        className="cursor-pointer rounded-full p-2 hover:bg-gray-300 transition-colors"
       >
-        <Image src={attach} alt="Attach" width={24} height={24} />
+        <Image src={attach} alt="Attach file" width={24} height={24} />
       </label>
-      <div className="hidden">
-        <AudioRecorder
-          onRecordingComplete={(blob: Blob) => {
-            addAudioElement(blob);
-          }}
-          recorderControls={recorderControls}
-        ></AudioRecorder>
-      </div>
+
       <button
         className="ml-2 p-2 rounded-full hover:bg-gray-300 transition-colors"
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
+        onMouseDown={startRecording}
+        onMouseUp={stopRecording}
+        aria-label="Record audio"
       >
-        <Image src={mic} alt="" height={22} width={22}></Image>
+        <Image src={mic} alt="Record audio" height={22} width={22} />
       </button>
 
       <button
-        className={
-          isRecording
-            ? "ml-2 p-2 text-white rounded-md hover:bg-gray-300 transition-colors opacity-0"
-            : "ml-2 p-2 text-white rounded-md hover:bg-gray-300 transition-colors opacity-100"
-        }
+        className="ml-2 p-2 text-white rounded-md hover:bg-gray-300 transition-colors"
         onClick={handleSend}
-        disabled={isRecording}
+        aria-label="Send message"
       >
-        <Image src={send} alt="" width={20} height={20} />
+        <Image src={send} alt="Send message" width={20} height={20} />
       </button>
     </div>
   );

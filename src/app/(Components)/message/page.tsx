@@ -1,17 +1,16 @@
 import React from "react";
 import InputBar from "./InputBar";
+import Message from "./Message";
+import { StorageProvider } from "./Storage";
 
-const MessageBar = (): React.JSX.Element => {
+const MessageBar: React.FC = () => {
   return (
-    <div className="w-3/4 h-full flex flex-col">
-      <div className="bg-slate-700 p-4 text-white text-xl font-bold">
-        Chat Header
+    <StorageProvider>
+      <div className="w-3/4 h-full flex flex-col">
+        <Message />
+        <InputBar />
       </div>
-      <div className="flex-grow overflow-y-auto p-4 bg-white">
-        <div className="mb-4">{/* Messages will go here */}</div>
-      </div>
-      <InputBar />
-    </div>
+    </StorageProvider>
   );
 };
 

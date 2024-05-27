@@ -34,7 +34,7 @@ const page = () => {
           </button>
         </form>
         <p className="text-center mt-4 text-sm text-gray-600">
-          Don't have an account?{" "}
+          Don't have an account?
           <Link
             href="/register"
             className="text-sky-700 font-medium hover:underline"
