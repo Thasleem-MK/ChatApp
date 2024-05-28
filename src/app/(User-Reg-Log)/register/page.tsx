@@ -1,15 +1,19 @@
 "use client";
-import React, { useState } from "react";
+import { Axios } from "@/app/Axios";
+import { errorToast, successToast } from "@/app/Toast";
+import { useRouter } from "next/navigation";
+import React, { FormEvent, useState } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
-const Page = ():JSX.Element => {
+const Page = (): JSX.Element => {
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
     phone: "",
-    password: "",
   });
+
+  const router = useRouter();
 
   const handleChange = (value: string, name: string): void => {
     setNewUser((prevState) => ({
@@ -18,10 +22,32 @@ const Page = ():JSX.Element => {
     }));
   };
 
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      if (!(newUser.email && newUser.name && newUser.phone)) {
+        errorToast("Please fill all the feilds");
+        return;
+      }
+      const response = await Axios.post("/register", newUser, {
+        withCredentials: true,
+      })
+        .then((result) => {
+          if (result.status == 200) {
+            successToast("OTP send to your email ID");
+            router.push("/otp");
+          }
+        })
+        .catch((error) => console.log(error));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="h-screen w-screen bg-sky-700 flex justify-center items-center">
       <div className="bg-white rounded-md shadow-lg p-8 max-w-md w-full mx-4">
-        <form action="" className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold text-center text-sky-700">
               ChatApp
@@ -60,17 +86,6 @@ const Page = ():JSX.Element => {
             }}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
           />
-          <input
-            type="text"
-            placeholder="Password"
-            required
-            name="password"
-            onChange={(e) => {
-              handleChange(e.target.value, e.target.name);
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-          />
-
           <button
             type="submit"
             className="w-full py-2 bg-sky-700 text-white rounded-md hover:bg-sky-800 transition-colors"

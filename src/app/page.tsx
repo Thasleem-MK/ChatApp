@@ -1,5 +1,11 @@
-import SideBar from "./(Components)/sideBar/page";
-import MessageBar from "./(Components)/message/page";
+import dynamic from "next/dynamic";
+
+const SideBar = dynamic(() => import("./(Components)/sideBar/page"), {
+  ssr: false,
+});
+const MessageBar = dynamic(() => import("./(Components)/message/page"), {
+  ssr: false,
+});
 
 export default async function Home() {
   return (
