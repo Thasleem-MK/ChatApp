@@ -1,25 +1,29 @@
 "use client";
 import { Axios } from "@/app/Axios";
-import { successToast } from "@/app/Toast";
-import { error } from "console";
+import { errorToast, successToast } from "@/app/Toast";
 import React, { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const page = () => {
   const [otp, setOtp] = useState("");
-    const handleSubmit = async (e: FormEvent) => {
-      e.preventDefault();
+  const router = useRouter();
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
     const response = await Axios.post(
       "/otp",
       { OTP: otp },
       { withCredentials: true }
     )
       .then((result) => {
-          if (result) {
-            successToast(result.data.message)
+        if (result) {
+          successToast(result.data.message);
+          router.push("/");
         }
       })
       .catch((error) => {
         console.error(error);
+        errorToast("Something went wrong!!");
       });
   };
   return (
